@@ -74,8 +74,18 @@ def log_to_buffer(buff, lin_processor, apikey):
             pass
         print_line = line_processor.process_line(line)
         if print_line:
+            distance_to_end = buff.document.get_end_of_document_position()
+            current_cursor_row = buff.document.cursor_position_row
+            distance_down = distance_to_end - current_cursor_row
+            if distance_down > 0:
+                buff.cursor_down(distance_down+1)
+                new_cursor_row = buff.document.cursor_position_row
             buff.insert_text(print_line)
             buff.newline()
+            if distance_down > 0 and not buff.document.on_last_line:
+                buff.cursor_up(new_cursor_row - current_cursor_row + 1)
+                pass
+            get_app().invalidate()
 
 class InputParser():
     def __init__(self, line_processor):

@@ -2,9 +2,11 @@ import dateutil
 
 class LineProcessor():
     def __init__(self):
+        self.next_id = 0
         pass
     def process_line(self, line):
-        return line
+        self.next_id += 1
+        return str(self.next_id) + ' | ' + line
 
 class HerokuLineProcessor(LineProcessor):
     def __init__(self, filters=set()):
