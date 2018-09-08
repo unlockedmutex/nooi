@@ -1,4 +1,4 @@
-from line_processor import HerokuLineProcessor
+from line_processor import LineProcessor, HerokuLineProcessor
 import sys
 
 
@@ -6,7 +6,7 @@ import heroku3
 import dateutil
 import prompt_toolkit as pk
 from prompt_toolkit.formatted_text import fragment_list_to_text, to_formatted_text
-
+from prompt_toolkit.shortcuts import input_dialog
 from prompt_toolkit import Application
 from prompt_toolkit.application import get_app
 from prompt_toolkit.buffer import Buffer
@@ -18,6 +18,7 @@ from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from prompt_toolkit.completion import Completion, WordCompleter, Completer
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.eventloop import EventLoop
+from sh import tail
 from prompt_toolkit.layout.processors import Transformation, Processor
 from prompt_toolkit.widgets import TextArea
 from threading import Thread
@@ -33,10 +34,9 @@ class FileStream(LogStream):
         self.filename = filename
 
     def log_gen(self):
-        with open(self.filename) as f:
-            for l in f.readlines():
-                yield l.strip()
-                time.sleep(0.1)
+        # runs forever
+        for line in tail("-f", self.filename, _iter=True):
+            yield(line)
 
 class FormatText(Processor):
     def apply_transformation(self, ti):
@@ -65,12 +65,12 @@ def exit_(event):
     """
     event.app.exit()
 
-def log_to_buffer(buff, lin_processor):
-    l = HerokuStream(sys.argv[1])
+def log_to_buffer(buff, lin_processor, apikey):
+    l = FileStream(apikey)
     for line in l.log_gen():
         try:
             line = line.decode('utf-8')
-        except ValueError:
+        except AttributeError:
             pass
         print_line = line_processor.process_line(line)
         if print_line:
@@ -83,6 +83,8 @@ class InputParser():
 
     def parse_user_input(self, buff):
         filt = buff.document.text[1:]
+        if buff.document.text == 'test':
+            buff.history_backward(20)
         if buff.document.text.startswith('+'):
             self.line_processor.filters.add(filt)
         if buff.document.text.startswith('-'):
@@ -94,15 +96,20 @@ class InputParser():
         pass
 
 
-line_processor = HerokuLineProcessor()
+line_processor = LineProcessor()
 input_parser = InputParser(line_processor)
+
+apikey = input_dialog(
+         title='Input API Key or filename',
+         text='Please enter your Heroku API key:',
+         password=True)
 
 logbuffer = Buffer()
 inputbuffer = Buffer(accept_handler=input_parser.parse_user_input, multiline=False, auto_suggest=AutoSuggestFromHistory(), complete_while_typing=True)
 
 inputwindow = Window(height=1, content=BufferControl(buffer=inputbuffer))
 
-t = Thread(target=log_to_buffer, args = [logbuffer, line_processor])
+t = Thread(target=log_to_buffer, args = [logbuffer, line_processor, apikey])
 t.start()
 
 root_container = HSplit([
@@ -113,6 +120,6 @@ root_container = HSplit([
 
 layout = Layout(root_container)
 
-app = Application(layout = layout, full_screen=True, key_bindings=kb)
+app = Application(layout = layout, full_screen=True, key_bindings=kb, mouse_support=True)
 app.layout.focus(inputwindow)
 app.run()

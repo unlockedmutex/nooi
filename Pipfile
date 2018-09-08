@@ -10,6 +10,7 @@ name = "pypi"
 "heroku3" = "*"
 python-dateutil = "*"
 prompt-toolkit = "*"
+sh = "*"
 
 
 [dev-packages]

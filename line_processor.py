@@ -4,12 +4,13 @@ class LineProcessor():
     def __init__(self):
         pass
     def process_line(self, line):
-        pass
+        return line
 
 class HerokuLineProcessor(LineProcessor):
     def __init__(self, filters=set()):
-        self.filters = {'binance'}
+        self.filters = set()
         self.longest_dyno_name = 0
+        self.next_id = 0
         pass
 
     def process_line(self, line):
@@ -20,6 +21,11 @@ class HerokuLineProcessor(LineProcessor):
             if filt not in line:
                 return ''
 
+        if line == '':
+            return ''
+
+        print_line.append(str(self.next_id))
+        self.next_id += 1
         time = dateutil.parser.parse(elements[0])
         formatted_time = '<seagreen>' + time.strftime("%Y-%m-%d %H:%M:%S") + '</seagreen>'
         print_line.append(formatted_time)
