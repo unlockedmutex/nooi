@@ -10,6 +10,7 @@ from prompt_toolkit.shortcuts import input_dialog
 from prompt_toolkit import Application
 from prompt_toolkit.application import get_app
 from prompt_toolkit.buffer import Buffer
+from prompt_toolkit.document import Document
 import time
 from prompt_toolkit.layout.containers import VSplit, HSplit, Window
 from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl
@@ -66,7 +67,7 @@ def exit_(event):
     event.app.exit()
 
 def log_to_buffer(buff, lin_processor, apikey):
-    l = FileStream(apikey)
+    l = HerokuStream(apikey)
     for line in l.log_gen():
         try:
             line = line.decode('utf-8')
@@ -74,18 +75,11 @@ def log_to_buffer(buff, lin_processor, apikey):
             pass
         print_line = line_processor.process_line(line)
         if print_line:
-            distance_to_end = buff.document.get_end_of_document_position()
-            current_cursor_row = buff.document.cursor_position_row
-            distance_down = distance_to_end - current_cursor_row
-            if distance_down > 0:
-                buff.cursor_down(distance_down+1)
-                new_cursor_row = buff.document.cursor_position_row
-            buff.insert_text(print_line)
-            buff.newline()
-            if distance_down > 0 and not buff.document.on_last_line:
-                buff.cursor_up(new_cursor_row - current_cursor_row + 1)
-                pass
-            get_app().invalidate()
+            #cursor_diff = buff.document.cursor_position_row - buff.document.get_end_of_document_position()
+            buff.document = Document(buff.text + print_line + '\n')
+            #if buff.document.on_last_line:
+            #    if cursor_diff > 1:
+            #        buff.cursor_up(cursor_diff-1)
 
 class InputParser():
     def __init__(self, line_processor):
@@ -106,7 +100,7 @@ class InputParser():
         pass
 
 
-line_processor = LineProcessor()
+line_processor = HerokuLineProcessor()
 input_parser = InputParser(line_processor)
 
 apikey = input_dialog(
