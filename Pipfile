@@ -11,6 +11,8 @@ name = "pypi"
 python-dateutil = "*"
 prompt-toolkit = "*"
 sh = "*"
+"autopep8" = "*"
+isort = "*"
 
 
 [dev-packages]

@@ -1,12 +1,15 @@
 import dateutil
 
+
 class LineProcessor():
     def __init__(self):
         self.next_id = 0
         pass
+
     def process_line(self, line):
         self.next_id += 1
         return str(self.next_id) + ' | ' + line
+
 
 class HerokuLineProcessor(LineProcessor):
     def __init__(self, filters=set()):
@@ -29,7 +32,8 @@ class HerokuLineProcessor(LineProcessor):
         print_line.append(str(self.next_id))
         self.next_id += 1
         time = dateutil.parser.parse(elements[0])
-        formatted_time = '<seagreen>' + time.strftime("%Y-%m-%d %H:%M:%S") + '</seagreen>'
+        formatted_time = '<seagreen>' + time.strftime(
+            "%Y-%m-%d %H:%M:%S") + '</seagreen>'
         print_line.append(formatted_time)
         source, dyno = elements[1][:-2].split('[')
         formatted_source = '<red>' + source + '</red>'
@@ -38,7 +42,8 @@ class HerokuLineProcessor(LineProcessor):
             self.longest_dyno_name = len(dyno)
             formatted_dyno = '<lightblue>' + dyno + '</lightblue>'
         else:
-            formatted_dyno = '<lightblue>' + dyno + ' ' * (self.longest_dyno_name - len(dyno))  + '</lightblue>'
+            formatted_dyno = '<lightblue>' + dyno + ' ' * (
+                self.longest_dyno_name - len(dyno)) + '</lightblue>'
         print_line.append(formatted_dyno)
         print_line.append(' '.join(elements[2:]))
 
