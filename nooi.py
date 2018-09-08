@@ -16,6 +16,7 @@ from prompt_toolkit.eventloop import EventLoop
 from prompt_toolkit.formatted_text import (fragment_list_to_text,
                                            to_formatted_text)
 from prompt_toolkit.key_binding import KeyBindings
+from prompt_toolkit.key_binding.bindings.mouse import load_mouse_bindings
 from prompt_toolkit.layout.containers import HSplit, VSplit, Window
 from prompt_toolkit.layout.controls import BufferControl, FormattedTextControl
 from prompt_toolkit.layout.layout import Layout
@@ -27,6 +28,11 @@ from sh import tail
 from line_processor import HerokuLineProcessor, LineProcessor
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+
+kb = KeyBindings()
+load_mouse_bindings()
+
 
 
 class LogStream():
@@ -63,8 +69,6 @@ class HerokuStream(LogStream):
             yield line
 
 
-kb = KeyBindings()
-
 
 @kb.add('c-q')
 def exit_(event):
@@ -76,7 +80,6 @@ def exit_(event):
     """
     event.app.exit()
 
-
 def log_to_buffer(buff, lin_processor, apikey):
     l = HerokuStream(apikey)
     for line in l.log_gen():
@@ -86,12 +89,12 @@ def log_to_buffer(buff, lin_processor, apikey):
             pass
         print_line = line_processor.process_line(line)
         if print_line:
-            #cursor_diff = buff.document.cursor_position_row - buff.document.get_end_of_document_position()
+            cursor_pos = buff.cursor_position
+            #if buff.document.on_last_line:
+            #    need_to_scroll = True
             buff.document = Document(buff.text + print_line + '\n')
-            # if buff.document.on_last_line:
-            #    if cursor_diff > 1:
-            #        buff.cursor_up(cursor_diff-1)
-
+            #if not need_to_scroll:
+            buff.cursor_position = cursor_pos
 
 class InputParser():
     def __init__(self, line_processor):
@@ -110,7 +113,6 @@ class InputParser():
                 pass
         buff.reset()
         pass
-
 
 line_processor = HerokuLineProcessor()
 input_parser = InputParser(line_processor)
